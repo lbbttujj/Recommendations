@@ -1,0 +1,27 @@
+@import '../../styles/variables.module';
+
+.modalView {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: @modal_backdrop;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+
+  .dialogWrapper {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 222px;
+    width: 100vw;
+
+    .actionBtn {
+      width: 80%;
+      height: 50px;
+    }
+  }
+}
