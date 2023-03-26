@@ -1,0 +1,25 @@
+@import '../../styles/variables.module';
+
+.panelHeader {
+  z-index: 11;
+  height: 100px;
+  background: linear-gradient(#000000, rgb(0 0 0 / 0%));
+
+  .backBtn {
+    color: @violet;
+  }
+}
+
+.filmPage {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  .filmImage {
+    img {
+      border-radius: 0 0 17px 17px;
+      width: 100vw;
+    }
+  }
+}

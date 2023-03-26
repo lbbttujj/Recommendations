@@ -1,8 +1,10 @@
 {
-  "extends": ["react-app", "prettier"],
+  "extends": ["react-app", "prettier","eslint:recommended"],
   "rules": {
     "prettier/prettier": "error",
-    "simple-import-sort/imports": "error"
+    "simple-import-sort/imports": "error",
+    "no-unused-vars": "warn",
+    "no-debugger": "warn"
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [

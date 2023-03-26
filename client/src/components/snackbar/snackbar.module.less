@@ -1,0 +1,20 @@
+@import "../../styles/variables.module";
+
+.snackbarWrapper {
+  display: flex;
+  justify-content: center;
+  .snackbar {
+    background-color: @malina_fade;
+    width: 263px;
+    transition: 500ms;
+    height: 44px;
+    border-radius: 25px;
+    color: white;
+    border-right: 15px;
+    position: fixed;
+    z-index: 1001;
+    bottom: 100px;
+    text-align: center;
+    font-size: 14px;
+  }
+}

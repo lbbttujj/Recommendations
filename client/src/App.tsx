@@ -5,18 +5,29 @@ import {
 	AdaptivityProvider,
 	AppRoot,
 	ConfigProvider,
-	ScreenSpinner,
+	Epic,
 	SplitCol,
 	SplitLayout,
 	View,
 } from '@vkontakte/vkui'
-import React, { useEffect, useState } from 'react'
+import React, { ReactElement, useEffect, useState } from 'react'
 
-import { Directories } from './components/Directories/Directories'
+import { TabBarComponent } from './components/tabbar/Tabbar'
+import { DirectoriesPage } from './pages/directoriesPage/DirectoriesPage'
+import { FilmPage } from './pages/filmPage/FilmPage'
+import { SearchPage } from './pages/searchPage/SearchPage'
+
+export type PagesType = 'searchPage' | 'directories'
 
 const App = () => {
-	const [activePanel, setActivePanel] = useState('directories')
-	const [user, setUser] = useState(null)
+	const [activeStory, setActiveStory] = React.useState<PagesType>('searchPage')
+
+	// eslint-disable-next-line no-unused-vars
+	const [_user, setUser] = useState(null)
+	const [popout, setPopout] = useState<ReactElement | null>(null)
+	const [dirActivePanel, setDirActivePanel] = useState<string>('directories')
+	const [searchActivePanel, setSearchActivePanel] =
+		useState<string>('searchPage')
 
 	useEffect(() => {
 		fetchData()
@@ -28,13 +39,61 @@ const App = () => {
 		setUser(user)
 	}
 
+	const onStoryChange = (e: React.MouseEvent<HTMLElement>) => {
+		if (e.currentTarget.dataset.story) {
+			setActiveStory(e.currentTarget.dataset.story as PagesType)
+		}
+	}
+
 	return (
-		<ConfigProvider>
+		<ConfigProvider appearance={'light'}>
 			<AdaptivityProvider>
-				<AppRoot>
-					<View activePanel={activePanel}>
-						<Directories id='directories' />
-					</View>
+				<AppRoot mode={'partial'}>
+					<SplitLayout popout={popout}>
+						<SplitCol
+							width='100%'
+							maxWidth='560px'
+							stretchedOnMobile
+							autoSpaced
+						>
+							<Epic
+								activeStory={activeStory}
+								tabbar={
+									<TabBarComponent
+										onStoryChange={onStoryChange}
+										activeStory={activeStory}
+									/>
+								}
+							>
+								<View id='directories' activePanel={dirActivePanel}>
+									<DirectoriesPage
+										id='directories'
+										changeDirPanel={setDirActivePanel}
+										setPopout={setPopout}
+									/>
+									<FilmPage
+										id='film'
+										title='test'
+										idFilm={'1102'}
+										back={() => setDirActivePanel('directories')}
+									/>
+								</View>
+								<View id='searchPage' activePanel={searchActivePanel}>
+									<SearchPage
+										id='searchPage'
+										setPopout={setPopout}
+										changeSearchPanel={setSearchActivePanel}
+									/>
+									<FilmPage
+										id='film'
+										title='test'
+										idFilm={'1102'}
+										back={() => setSearchActivePanel('searchPage')}
+									/>
+								</View>
+							</Epic>
+						</SplitCol>
+					</SplitLayout>
 				</AppRoot>
 			</AdaptivityProvider>
 		</ConfigProvider>
