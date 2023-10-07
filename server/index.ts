@@ -1,10 +1,11 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const { graphqlHTTP } = require("express-graphql");
-const schema = require("./graphql/schema");
-require("dotenv").config();
-var cors = require("cors");
-const root = require("./graphql/resolvers");
+import express from "express";
+import bodyParser from "body-parser";
+import { graphqlHTTP } from "express-graphql";
+import { schema } from "./graphql/schema";
+import dotenv from "dotenv";
+dotenv.config();
+import cors from "cors";
+import { root } from "./graphql/resolvers";
 
 const PORT = process.env.SERVER_PORT;
 
@@ -19,7 +20,6 @@ const corsOptions = {
   optionSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-
 app.use(
   "/graphql",
   graphqlHTTP({
