@@ -1,200 +1,137 @@
-//@ts-nocheck
+import { useLazyQuery, useMutation } from '@apollo/client'
+import { Button, Group, Panel, ScreenSpinner, Search } from '@vkontakte/vkui'
+import { Directory } from 'components/directory/Directory'
+import { useAppSelector, useGetDirectories, useSnackBar } from 'hooks'
+import React, {
+	ChangeEvent,
+	ReactElement,
+	useEffect,
+	useRef,
+	useState,
+} from 'react'
+import { setDir } from 'store/dirSlice/dirSlice'
+import { FilmType } from 'store/types'
 
-import { useMutation, useQuery } from '@apollo/client'
-import { Icon16Dropdown, Icon28SettingsOutline } from '@vkontakte/icons'
-import {
-	ActionSheet,
-	ActionSheetDefaultIosCloseItem,
-	ActionSheetItem,
-	Cell,
-	Group,
-	Input,
-	List,
-	Panel,
-	PanelHeader,
-	PanelHeaderContent,
-	PanelHeaderContext,
-	Search,
-	Text,
-} from '@vkontakte/vkui'
-import React, { ReactElement, useEffect, useRef, useState } from 'react'
-
-import { Dialog } from '../../components/dialog/Dialog'
-import { Directory } from '../../components/directory/Directory'
-import { Snackbar } from '../../components/snackbar/Snackbar'
-import { ADD_DIR, DELETE_DIR, GET_DIRECTORIES } from '../../graphql/dbQuery'
-import { useAppDispatch, useAppSelector } from '../../hooks'
-import { setDir } from '../../store/dirSlice/dirSlice'
+import { DeleteBar } from '../../components/deleteBar/DeleteBar'
+import { PreviewDirectories } from '../../components/directory/previewDirectories.tsx/PreviewDirectories'
+import { DELETE_FILM, GET_FiLMS } from '../../graphql/dbQuery'
+import { setDirectoryPageFilmCard } from '../../store/filmSlice/filmsSlice'
 import styles from './directoriesPage.module.less'
+import { Toolbar } from './Toolbar'
 
 type DirectoriesProps = {
 	id: string
 	setPopout: React.Dispatch<React.SetStateAction<ReactElement | null>>
 	changeDirPanel: React.Dispatch<React.SetStateAction<string>>
+	setActiveModal: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 export const DirectoriesPage: React.FC<DirectoriesProps> = ({
 	id,
 	setPopout,
 	changeDirPanel,
+	setActiveModal,
 }) => {
-	const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] =
-		React.useState(false)
-	const [newDirName, setNewDirName] = useState('')
+	const { Snackbar, setMessage } = useSnackBar()
+	const [searchValue, setSearchValue] = useState('')
+	const [films, setFilms] = useState<FilmType[]>([])
+	const [mode, setMode] = useState<'removable' | 'selectable'>()
+	const [isDeleteBarOpen, setIsDeleteBarOpen] = useState(false)
+	const [selectedDirectories, setSelectedDirectories] = useState<string[]>([])
 
-	const [menuOpened, setMenuOpened] = useState<boolean>(false)
-	const [directories, setDirectories] = useState<Directory[]>([])
-	const [isCreateDirSBVisible, setIsCreateDirSBVisible] = useState(false)
 	const baseRef = useRef(null)
-	const currentDir = useAppSelector((state) => state.directories)
-	const { data, refetch } = useQuery<{ getDirectories: Directory[] }>(
-		GET_DIRECTORIES,
-		{
-			variables: {
-				userId: 1,
-			},
-		}
-	)
-	const [addDir] = useMutation(ADD_DIR)
-	const [deleteDir] = useMutation(DELETE_DIR)
 
-	const dispatch = useAppDispatch()
+	const currentDir = useAppSelector((state) => state.directories)
+
+	const { directories, refetch: updateDirectories } = useGetDirectories()
+	const [getFilmsFromDir, { data: filmsState, loading, refetch: updateFilms }] =
+		useLazyQuery<{ getFilms: FilmType[] }, { dirId: string }>(GET_FiLMS)
+
+	const [deleteFilm] = useMutation(DELETE_FILM)
+
+	const deleteFilmHandler = (filmId: string) => {
+		deleteFilm({ variables: { filmId: filmId } })
+			.then((r) => {
+				updateDirectories({ dirId: currentDir.dirId })
+			})
+			.catch((e) => console.log(e))
+	}
+
+	const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const currentSearchValue = event.target.value
+		setSearchValue(currentSearchValue)
+		setFilms((prev) => {
+			if (!currentSearchValue) {
+				return filmsState?.getFilms || []
+			}
+			return prev.filter((el) =>
+				el.name.toLowerCase().includes(currentSearchValue.toLowerCase())
+			)
+		})
+	}
 
 	useEffect(() => {
-		if (data) {
-			setDirectories(data.getDirectories)
-		}
-	}, [data])
-
-	const toggleContext = () => {
-		setMenuOpened((prev) => !prev)
-	}
-
-	const addDirectoryHandler = () => {
-		addDir({ variables: { input: { dirName: newDirName, userId: 1 } } })
-			.then(() => {
-				setIsCreateGroupDialogOpen(false)
-				setNewDirName('')
-				refetch()
-				setIsCreateDirSBVisible(true)
-			})
-			.catch((e) => {
-				console.log(e)
-			})
-	}
-
-	const onClose = () => {
-		setPopout(null)
-	}
-
-	const deleteDirectoryHandler = () => {
-		deleteDir({
-			variables: {
-				input: { dirId: currentDir.dirId },
-			},
+		updateFilms({ dirId: currentDir.dirId }).then(() => {
+			updateDirectories()
 		})
-			.then(() => {
-				refetch()
-				dispatch(setDir({ dirName: '', id: '' }))
-			})
-			.catch((error) => alert(error))
-	}
+	}, [currentDir, getFilmsFromDir, updateDirectories])
 
-	const openActionSheet = () => {
-		setPopout(
-			<ActionSheet
-				onClose={onClose}
-				iosCloseItem={<ActionSheetDefaultIosCloseItem />}
-				toggleRef={baseRef}
-			>
-				<ActionSheetItem
-					onClick={() => {
-						setIsCreateGroupDialogOpen(true)
-					}}
-					autoClose
-				>
-					Добавить папку
-				</ActionSheetItem>
-				<ActionSheetItem autoClose>Переименовать папку</ActionSheetItem>
-				<ActionSheetItem
-					onClick={() => deleteDirectoryHandler()}
-					autoClose
-					mode='destructive'
-				>
-					Удалить папку
-				</ActionSheetItem>
-			</ActionSheet>
-		)
-	}
+	useEffect(() => {
+		if (filmsState?.getFilms) {
+			setFilms(filmsState.getFilms)
+		}
+	}, [filmsState])
 
-	// @ts-ignore
 	return (
-		<Panel id={id} getRootRef={baseRef} style={{ marginBottom: '15px' }}>
-			<PanelHeader>
-				<div className={styles.header}>
-					<PanelHeaderContent
-						aside={
-							<Icon16Dropdown
-								style={{
-									transform: `rotate(${menuOpened ? '180deg' : '0'})`,
-								}}
-							/>
-						}
-						onClick={toggleContext}
-					>
-						{currentDir.dirName ? currentDir.dirName : 'Выберите папку'}
-					</PanelHeaderContent>
-					<div className={styles.settingsIcon}>
-						<Icon28SettingsOutline onClick={() => openActionSheet()} />
-					</div>
-				</div>
-			</PanelHeader>
-			<PanelHeaderContext opened={menuOpened} onClose={toggleContext}>
-				<List>
-					{directories.map((dir) => (
-						<Cell
-							onClick={() => {
-								dispatch(setDir({ dirId: dir.id, dirName: dir.dir_name }))
-								setMenuOpened(false)
-							}}
-						>
-							{dir.dir_name}
-						</Cell>
-					))}
-				</List>
-			</PanelHeaderContext>
-
-			<Group>
-				<div style={{ display: 'flex' }}>
-					<Search value='' onChange={() => console.log('ddd')} after={null} />
-					<div>филтьтр</div>
-				</div>
-			</Group>
-			<Group>
-				<Directory
-					changeDirPanel={changeDirPanel}
-					dir_name={currentDir.dirName}
-					id={currentDir.id}
+		<Panel id={id} getRootRef={baseRef} className={styles.directoriesPagePanel}>
+			{
+				<Toolbar
+					currentDir={currentDir}
+					setPopout={setPopout}
+					directories={directories}
+					baseRef={baseRef}
+					updateDirectories={updateDirectories}
+					setMessage={setMessage}
 				/>
-			</Group>
-			{isCreateGroupDialogOpen && (
-				<Dialog
-					buttonText='Создать группу'
-					closeDialog={() => setIsCreateGroupDialogOpen(false)}
-					buttonAction={() => addDirectoryHandler()}
-				>
-					<Text>Введите название папки</Text>
-					<Input
-						onChange={(event) => setNewDirName(event.target.value)}
-						value={newDirName}
+			}
+			{currentDir.dirId && (
+				<Group>
+					<Search
+						value={searchValue}
+						onChange={handleSearchChange}
+						after={null}
 					/>
-				</Dialog>
+				</Group>
 			)}
-			<Snackbar
-				isSnackBarVisible={isCreateDirSBVisible}
-				setIsSnackBarVisible={setIsCreateDirSBVisible}
-				text={'Группа успешно добавлена'}
+			<Group>
+				{loading && <ScreenSpinner size={'large'} />}
+				{currentDir.dirId ? (
+					<Directory
+						id={currentDir.dirId}
+						changeDirPanel={changeDirPanel}
+						films={films}
+						setMessage={setMessage}
+						viewPanelName='dirFilm'
+						mode={mode}
+						setMode={setMode}
+						setActiveModal={setActiveModal}
+						setFilmCard={setDirectoryPageFilmCard}
+					/>
+				) : (
+					<PreviewDirectories
+						setSelectedDirectories={setSelectedDirectories}
+						directories={directories}
+						setDir={setDir}
+					/>
+				)}
+			</Group>
+			<DeleteBar
+				deleteHandler={() => console.log('delete')}
+				selected={selectedDirectories}
+				isOpen={isDeleteBarOpen}
+				setIsOpen={setIsDeleteBarOpen}
 			/>
+			{Snackbar}
 		</Panel>
 	)
 }

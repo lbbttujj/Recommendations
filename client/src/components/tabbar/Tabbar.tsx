@@ -1,4 +1,5 @@
 import {
+	Icon24Users3Outline,
 	Icon28FolderSimpleOutline,
 	Icon32SearchOutline,
 } from '@vkontakte/icons'
@@ -31,12 +32,14 @@ export const TabBarComponent: React.FC<TabItemType> = ({
 			>
 				<Icon28FolderSimpleOutline />
 			</TabbarItem>
-			{/*<TabbarItem*/}
-			{/*	selected={activeStory === 'film'}*/}
-			{/*	data-story='film'*/}
-			{/*	onClick={onStoryChange}*/}
-			{/*	text='test'*/}
-			{/*></TabbarItem>*/}
+			<TabbarItem
+				selected={activeStory === 'socialPage'}
+				data-story='socialPage'
+				onClick={onStoryChange}
+				text='Друзья'
+			>
+				<Icon24Users3Outline />
+			</TabbarItem>
 		</Tabbar>
 	)
 }

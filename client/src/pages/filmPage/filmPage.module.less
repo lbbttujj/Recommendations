@@ -7,6 +7,7 @@
 
   .backBtn {
     color: @violet;
+    position: fixed;
   }
 }
 
@@ -15,11 +16,64 @@
   flex-direction: column;
   position: absolute;
   top: 0;
+  height: fit-content;
+  padding-bottom: 110px;
   z-index: 10;
   .filmImage {
+    position: relative;
     img {
       border-radius: 0 0 17px 17px;
       width: 100vw;
+    }
+
+    .arrowDown {
+      position: absolute;
+      bottom: 0;
+      width: 100vw;
+      display: flex;
+      height: 64px;
+      align-items: center;
+      background: linear-gradient(0deg, black, transparent);
+    }
+      svg {
+        margin-left: calc(50% - 50px);
+      }
+  }
+  .title {
+    text-align: center;
+  }
+  .description {
+    padding: 0 20px;
+  }
+
+   .favoriteIcon {
+     z-index: 10;
+     position: fixed;
+     bottom: 50px;
+     left: 20px;
+   }
+  .recommendIcon {
+    z-index: 10;
+    position: fixed;
+    bottom: 50px;
+    right: 20px;
+  }
+  .watchability {
+    &Items {
+      display: flex;
+      justify-content: flex-start;
+    }
+    img {
+      width: 50px;
+      border-radius: 12px;
+      margin-left: 10px;
+      margin-right: 20px;
+    }
+  }
+  .trailers {
+    .trailer {
+      z-index: 1000;
+      padding: 10px 10px 55px;
     }
   }
 }

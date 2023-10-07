@@ -1,73 +1,139 @@
 import { useLazyQuery, useMutation } from '@apollo/client'
-import { ScreenSpinner } from '@vkontakte/vkui'
-import React, { useEffect } from 'react'
+import { ActionCreatorWithPayload } from '@reduxjs/toolkit'
+import { Cell, Group } from '@vkontakte/vkui'
+import React, { useEffect, useState } from 'react'
+import { FilmType } from 'store/types'
 
-import { DELETE_FILM, GET_FiLMS } from '../../graphql/dbQuery'
-import { useAppSelector } from '../../hooks'
+import { DELETE_FILM, DELETE_FILMS, GET_FiLMS } from '../../graphql/dbQuery'
+import { Film } from '../../store/filmSlice/filmsSlice'
+import { DeleteBar } from '../deleteBar/DeleteBar'
 import { Films } from '../films/Films'
 import styles from './directory.module.less'
 
 export type DirectoryTypeProps = {
+	id?: string
 	changeDirPanel: React.Dispatch<React.SetStateAction<string>>
+	films: FilmType[]
+	setMessage: React.Dispatch<React.SetStateAction<string>>
+	mode?: 'removable' | 'selectable'
+	setMode?: React.Dispatch<
+		React.SetStateAction<'removable' | 'selectable' | undefined>
+	>
+	viewPanelName: string
+	setActiveModal?: React.Dispatch<React.SetStateAction<string | null>>
+	setFilmCard: ActionCreatorWithPayload<Film>
 }
 
-type FilmType = {
-	id: string
-	kp_id: number
-	dir_id: string
-	img_url: string
-	name: string
-	description: string
-}
-export const Directory: React.FC<DirectoryTypeProps> = ({ changeDirPanel }) => {
-	const dir = useAppSelector((state) => state.directories)
-
-	const [getFilmsFromDir, { data, loading, refetch }] = useLazyQuery<
+export const Directory: React.FC<DirectoryTypeProps> = ({
+	id,
+	changeDirPanel,
+	films,
+	setMessage,
+	viewPanelName,
+	setMode,
+	mode,
+	setActiveModal,
+	setFilmCard,
+}) => {
+	const [selectedItems, setSelectedItems] = useState<string[]>([])
+	const [currentFilms, setCurrentFilms] = useState<FilmType[]>([])
+	const [isDeleteBarOpen, setIsDeleteBarOpen] = useState(false)
+	const [deleteFilms] = useMutation(DELETE_FILMS)
+	const [_, { refetch: updateFilms }] = useLazyQuery<
 		{ getFilms: FilmType[] },
 		{ dirId: string }
 	>(GET_FiLMS)
 
 	useEffect(() => {
-		getFilmsFromDir({
-			variables: { dirId: dir.dirId },
-		})
-	}, [dir])
+		setCurrentFilms(films)
+	}, [films])
 
-	const [deleteFilm] = useMutation(DELETE_FILM)
+	const onContextmenuHandler = (
+		event: React.MouseEvent<HTMLElement>,
+		filmId: string
+	) => {
+		event.preventDefault()
+		setMode && setMode('selectable')
+		selectHandler(filmId)
+	}
 
-	const deleteFilmHandler = (filmId: string) => {
-		deleteFilm({ variables: { filmId: filmId } })
-			.then((r) => {
-				console.log('success')
-				refetch({ dirId: dir.dirId })
+	const deleteHandler = () => {
+		deleteFilms({
+			variables: {
+				input: { filmIds: selectedItems },
+			},
+		}).then(() => {
+			setSelectedItems([])
+			setMessage('Фильмы удалены')
+			updateFilms({ dirId: id || '' }).then((res) => {
+				res.data?.getFilms && setCurrentFilms(res.data?.getFilms)
 			})
-			.catch((e) => console.log(e))
+		})
+	}
+
+	const selectHandler = (id: string) => {
+		setSelectedItems((prev) => {
+			const newState = [...prev]
+			if (newState.filter((el) => el === id).length !== 0) {
+				return newState.filter((el) => el !== id)
+			}
+			newState.push(id)
+			return newState
+		})
+	}
+
+	useEffect(() => {
+		console.log(currentFilms)
+	}, [currentFilms])
+
+	useEffect(() => {
+		if (selectedItems.length) {
+			setIsDeleteBarOpen(true)
+		} else {
+			setIsDeleteBarOpen(false)
+			setMode && setMode(undefined)
+		}
+	}, [selectedItems])
+
+	const getColor = (id: string) => {
+		if (selectedItems.find((el) => el === id)) {
+			return 'gray'
+		}
+		return 'white'
 	}
 
 	return (
 		<div className={styles.directory}>
-			{loading && <ScreenSpinner size={'large'} />}
-			{data &&
-				data.getFilms.map((film) => (
-					<div className={styles.dirFilmWrapper}>
-						<span
-							onClick={(event) => {
-								event.stopPropagation()
-								deleteFilmHandler(film.id)
-							}}
-							className={styles.closeIcon}
-						>
-							x
-						</span>
+			<Group>
+				{!currentFilms.length && <div>Тут ничего пока нет</div>}
+				{currentFilms.map((film) => (
+					<Cell
+						onChange={(event) => selectHandler(film.id)}
+						mode={mode}
+						style={{ backgroundColor: getColor(film.id) }}
+						className={styles.dirFilmWrapper}
+						onContextMenu={(event) => onContextmenuHandler(event, film.id)}
+					>
 						<Films
 							id={film.kp_id}
 							name={film.name}
 							shortDescription={film.description}
-							poster={{ url: film.img_url }}
+							poster={{ previewUrl: film.img_url }}
 							changeViewPanel={changeDirPanel}
+							mode={mode}
+							setMessage={setMessage}
+							viewPanelName={viewPanelName}
+							setFilmCard={setFilmCard}
 						/>
-					</div>
+					</Cell>
 				))}
+			</Group>
+			<DeleteBar
+				deleteHandler={deleteHandler}
+				selected={selectedItems}
+				isOpen={isDeleteBarOpen}
+				setIsOpen={setIsDeleteBarOpen}
+			/>
 		</div>
 	)
 }

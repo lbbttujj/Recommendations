@@ -1,0 +1,1 @@
+export { useGetFriends } from './useGetFriends'

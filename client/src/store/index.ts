@@ -2,14 +2,20 @@ import { configureStore } from '@reduxjs/toolkit'
 
 import dirReducer from './dirSlice/dirSlice'
 import filmsReducer from './filmSlice/filmsSlice'
+import friendDirSlice from './friendDirSlice/friendDirSlice'
+import friendSlice from './friendSlice/friendSlice'
 import searchReducer from './searchSlice/searchSlice'
+import userReducer from './userSlice/userSlice'
 // ...
 
 export const store = configureStore({
 	reducer: {
 		films: filmsReducer,
 		directories: dirReducer,
+		friendDirectories: friendDirSlice,
 		search: searchReducer,
+		user: userReducer,
+		friend: friendSlice,
 	},
 })
 
