@@ -46,8 +46,14 @@ export type DeleteDirectory = {
   dirId: string;
 };
 
+type UserInfo = {
+  userId: number;
+  userName: string;
+};
+
 export type Recommend = {
-  usersIds: number[];
+  usersInfo: UserInfo[];
+  userName: string;
   kpId: number;
   imgUrl: string;
   name: string;

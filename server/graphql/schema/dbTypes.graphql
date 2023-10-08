@@ -54,8 +54,13 @@ input AddUser {
     userRole: String
 }
 
+input UserInfo {
+    userId: Int!,
+    userName: String!
+}
+
 input Recommend {
-    usersIds: [Int]
+    usersInfo: [UserInfo]
     kpId: Int
     imgUrl: String
     name: String

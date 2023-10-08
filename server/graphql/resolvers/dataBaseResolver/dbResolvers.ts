@@ -35,7 +35,6 @@ export const dbResolvers = {
   },
   addUser: async ({ input }: Input<User>) => {
     const { vkId, userName } = input;
-    console.log("here: ", vkId);
     const newUser = await pool.query(
       "INSERT INTO users (vk_id, user_name) VALUES ($1, $2) RETURNING *",
       [vkId, userName]
@@ -51,7 +50,6 @@ export const dbResolvers = {
   addDirectory: async ({ input }: Input<Directory>) => {
     let { userId, dirName, dirType } = input;
     dirType = dirType ? dirType : "";
-
     const newDirectory = await pool.query(
       "INSERT INTO directories (id, user_id, dir_name, dir_type) VALUES (uuid_generate_v4(), $1, $2, $3)  RETURNING *",
       [userId, dirName, dirType]
@@ -81,8 +79,6 @@ export const dbResolvers = {
   },
   clearDir: async ({ input }: Input<ClearDir>) => {
     const { dirId } = input;
-    console.log(dirId);
-    console.log(`DELETE FROM films WHERE dir_id  = ${dirId}`);
     return pool.query(`DELETE FROM films WHERE dir_id  = $1`, [dirId]);
   },
   deleteDirectory: async ({ input }: Input<DeleteDirectory>) => {
@@ -90,11 +86,11 @@ export const dbResolvers = {
     return pool.query(`DELETE FROM directories WHERE id = $1`, [dirId]);
   },
   recommend: async ({ input }: Input<Recommend>) => {
-    const { usersIds, ...props } = input;
+    const { usersInfo, ...props } = input;
     try {
-      usersIds.map(async (id) => {
+      usersInfo.map(async ({ userId, userName }) => {
         const dirRecommendId = await pool.query(
-          `SELECT * FROM directories WHERE user_id = ${id} and dir_type = 'Recommended'`
+          `SELECT * FROM directories WHERE user_id = ${userId} and dir_type = 'Recommended'`
         );
         if (dirRecommendId.rows.length > 0) {
           dbResolvers.addFilmToDirectory({
@@ -102,6 +98,46 @@ export const dbResolvers = {
               dirId: dirRecommendId.rows[0].id,
               ...props,
             },
+          });
+        } else {
+          dbResolvers.getUser({ vkId: userId }).then((user) => {
+            if (!user) {
+              dbResolvers
+                .addUser({
+                  input: { vkId: userId, userName: userName, userRole: "user" },
+                })
+                .then(() => {
+                  pool
+                    .query(
+                      `SELECT * FROM directories WHERE user_id = ${userId} and dir_type = 'Recommended'`
+                    )
+                    .then((res) => {
+                      dbResolvers.addFilmToDirectory({
+                        input: {
+                          dirId: res.rows[0].id,
+                          ...props,
+                        },
+                      });
+                    });
+                });
+            } else {
+              dbResolvers
+                .addDirectory({
+                  input: {
+                    userId: userId,
+                    dirName: "Рекоммендованное",
+                    dirType: "Recommended",
+                  },
+                })
+                .then(() => {
+                  dbResolvers.addFilmToDirectory({
+                    input: {
+                      dirId: dirRecommendId.rows[0].id,
+                      ...props,
+                    },
+                  });
+                });
+            }
           });
         }
       });
