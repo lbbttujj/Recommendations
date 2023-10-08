@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client'
 import bridge from '@vkontakte/vk-bridge'
-import { Button, Cell } from '@vkontakte/vkui'
+import { Button, Cell, Search } from '@vkontakte/vkui'
 import {
 	Avatar,
 	Group,
@@ -12,6 +12,7 @@ import { useAppSelector } from 'hooks'
 import React, { useEffect, useState } from 'react'
 
 import { RECOMMEND } from '../../../graphql/dbQuery'
+import { VkUsers } from '../../../store/types'
 import styles from './recommendModal.module.less'
 
 type RecommendModalProps = {
@@ -25,13 +26,20 @@ export const RecommendModal: React.FC<RecommendModalProps> = ({
 	id,
 	setMessage,
 }) => {
-	const [appUsers, setAppUsers] = useState([])
-	const [selectedUsers, setSelectedUsers] = useState<number[]>([])
+	const [appUsers, setAppUsers] = useState<Array<VkUsers>>([])
+	const [searchValue, setSearchValue] = useState<string>('')
+	const [selectedUsers, setSelectedUsers] = useState<
+		Array<{ userId: number; userName: string }>
+	>([])
 	const access_token = useAppSelector((state) => state.user.access_token)
 	const { kpId, poster, title } = useAppSelector(
 		(state) => state.films.recommend
 	)
 	const [recommend] = useMutation(RECOMMEND)
+
+	const searchHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchValue(event.target.value)
+	}
 
 	useEffect(() => {
 		getAppUsers()
@@ -45,7 +53,6 @@ export const RecommendModal: React.FC<RecommendModalProps> = ({
 					params: {
 						v: '5.131',
 						fields: 'photo_50',
-						count: 10,
 						access_token,
 					},
 				})
@@ -61,7 +68,7 @@ export const RecommendModal: React.FC<RecommendModalProps> = ({
 		recommend({
 			variables: {
 				input: {
-					usersIds: [99483935], //todo : selectedUsers
+					usersInfo: selectedUsers,
 					name: title,
 					kpId,
 					imgUrl: poster,
@@ -80,48 +87,51 @@ export const RecommendModal: React.FC<RecommendModalProps> = ({
 		<ModalPage
 			id={id}
 			header={
-				<ModalPageHeader before={<PanelHeaderClose onClick={onClose} />}>
-					Рекоммендовать
-				</ModalPageHeader>
+				<>
+					<ModalPageHeader before={<PanelHeaderClose onClick={onClose} />}>
+						Рекомендовать
+					</ModalPageHeader>
+					<Search value={searchValue} onChange={searchHandler} after={null} />
+				</>
 			}
 		>
 			<Group className={styles.recommendModuleContent}>
 				<div className={styles.appUsers}>
-					{appUsers.map((user) => {
-						return (
-							<Cell
-								mode={'selectable'}
-								// @ts-ignore
-								before={<Avatar src={user.photo_50} />}
-								// @ts-ignore
-								key={user.id}
-								onChange={(event) => {
-									if ((event.target as HTMLInputElement).checked) {
-										setSelectedUsers((prev) => {
-											// @ts-ignore
-											prev.push(user.id)
-											return prev
-										})
-									} else {
-										setSelectedUsers((prev) => {
-											// @ts-ignore
-											return prev.filter((id) => id !== user.id)
-										})
-									}
-								}}
-							>
-								{
-									// @ts-ignore
-									user.first_name
-								}
-							</Cell>
+					{appUsers
+						.filter((el) =>
+							el.first_name.toLowerCase().includes(searchValue.toLowerCase())
 						)
-					})}
+						.map((user) => {
+							return (
+								<Cell
+									mode={'selectable'}
+									before={<Avatar src={user.photo_50} />}
+									key={user.id}
+									onChange={(event) => {
+										if ((event.target as HTMLInputElement).checked) {
+											setSelectedUsers((prev) => {
+												prev.push({
+													userId: user.id,
+													userName: user.first_name,
+												})
+												return prev
+											})
+										} else {
+											setSelectedUsers((prev) => {
+												return prev.filter(({ userId }) => userId !== user.id)
+											})
+										}
+									}}
+								>
+									{user.first_name}
+								</Cell>
+							)
+						})}
 				</div>
 				<div className={styles.actionButton}>
 					<Button
+						className={styles.sendButton}
 						onClick={sendRecommendation}
-						style={{ width: '98%' }}
 						size={'m'}
 					>
 						Отправить

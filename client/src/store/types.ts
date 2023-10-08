@@ -1,5 +1,3 @@
-import React from 'react'
-
 export type DirectoryType = {
 	id: string
 	user_id: number
@@ -28,4 +26,14 @@ export type Film2Type = {
 export interface DirState {
 	dirId: string
 	dirName: string
+}
+
+export type VkUsers = {
+	can_access_closed: boolean
+	first_name: string
+	id: number
+	is_closed: boolean
+	last_name: string
+	photo_50: string
+	track_code: string
 }

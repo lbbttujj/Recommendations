@@ -12,6 +12,7 @@ import styles from './directory.module.less'
 
 export type DirectoryTypeProps = {
 	id?: string
+	isModeChangeable?: boolean
 	changeDirPanel: React.Dispatch<React.SetStateAction<string>>
 	films: FilmType[]
 	setMessage: React.Dispatch<React.SetStateAction<string>>
@@ -26,6 +27,7 @@ export type DirectoryTypeProps = {
 
 export const Directory: React.FC<DirectoryTypeProps> = ({
 	id,
+	isModeChangeable = true,
 	changeDirPanel,
 	films,
 	setMessage,
@@ -112,7 +114,9 @@ export const Directory: React.FC<DirectoryTypeProps> = ({
 						mode={mode}
 						style={{ backgroundColor: getColor(film.id) }}
 						className={styles.dirFilmWrapper}
-						onContextMenu={(event) => onContextmenuHandler(event, film.id)}
+						onContextMenu={(event) =>
+							isModeChangeable && onContextmenuHandler(event, film.id)
+						}
 					>
 						<Films
 							id={film.kp_id}

@@ -1,19 +1,24 @@
 
 .recommendModuleContent {
-  height: 80vh;
+  height: 70vh;
   overflow-y: auto;
 
   .appUsers {
     padding-bottom: 40px;
+    position: relative;
   }
 
   .actionButton {
-    position: fixed;
-    bottom: 33px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
     padding-bottom: 7px;
     display: flex;
     justify-content: center;
-    width: 100vw;
     background-color: white;
+
+    .sendButton {
+        width: 96%;
+    }
   }
 }

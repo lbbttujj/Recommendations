@@ -36,7 +36,6 @@ export const useGetFriends = () => {
 					params: {
 						v: '5.131',
 						fields: 'photo_50',
-						count: 10,
 						access_token,
 					},
 				})

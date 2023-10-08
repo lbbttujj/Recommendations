@@ -42,15 +42,13 @@ export const FriendDirectoriesPage: React.FC<DirectoriesProps> = ({
 	const { directories, refetch: updateDirectories } = useGetDirectories(
 		currentFriend.id
 	)
-	const [getFilmsFromDir, { data: filmsState, loading }] = useLazyQuery<
+	const [getFilmsFromDir, { data: filmsState, refetch }] = useLazyQuery<
 		{ getFilms: FilmType[] },
 		{ dirId: string }
 	>(GET_FiLMS)
 
 	useEffect(() => {
-		getFilmsFromDir({
-			variables: { dirId: currentDir.dirId },
-		}).then(() => {
+		refetch({ dirId: currentDir.dirId }).then(() => {
 			updateDirectories()
 		})
 	}, [currentDir, getFilmsFromDir, updateDirectories])
@@ -99,6 +97,7 @@ export const FriendDirectoriesPage: React.FC<DirectoriesProps> = ({
 						setMessage={setMessage}
 						viewPanelName={'friendFilm'}
 						setFilmCard={setFriendPageFilmCard}
+						isModeChangeable={false}
 					/>
 				) : (
 					<PreviewDirectories directories={directories} setDir={setFriendDir} />
