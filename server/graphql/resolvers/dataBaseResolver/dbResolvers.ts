@@ -13,6 +13,7 @@ import {
   UserId,
   VkId,
 } from "./types";
+import { recommendQuery } from "./queries/recommend";
 export const dbResolvers = {
   getDirectories: async (params: UserId) => {
     const { userId } = params;
@@ -58,11 +59,19 @@ export const dbResolvers = {
   },
   addFilmToDirectory: async ({ input }: Input<Film>) => {
     const { dirId, kpId, imgUrl, name, description } = input;
-    const newFilm = await pool.query(
-      "INSERT INTO films (id, kp_id, dir_id, img_url, name, description) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5) RETURNING *",
-      [kpId, dirId, imgUrl, name, description]
+    const isFilmAlreadyExist = await pool.query(
+      "SELECT id FROM films WHERE dir_id = $1 and kp_id = $2",
+      [dirId, kpId]
     );
-    return newFilm.rows[0];
+    if (isFilmAlreadyExist.rows.length) {
+      return new Error("Фильм уже добавлен в эту папку");
+    } else {
+      const newFilm = await pool.query(
+        "INSERT INTO films (id, kp_id, dir_id, img_url, name, description) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5) RETURNING *",
+        [kpId, dirId, imgUrl, name, description]
+      );
+      return newFilm.rows[0];
+    }
   },
   deleteFilm: async ({ input }: Input<DeleteFilm>) => {
     const { filmId } = input;
@@ -86,65 +95,11 @@ export const dbResolvers = {
     return pool.query(`DELETE FROM directories WHERE id = $1`, [dirId]);
   },
   recommend: async ({ input }: Input<Recommend>) => {
-    const { usersInfo, ...props } = input;
-    try {
-      usersInfo.map(async ({ userId, userName }) => {
-        const dirRecommendId = await pool.query(
-          `SELECT * FROM directories WHERE user_id = ${userId} and dir_type = 'Recommended'`
-        );
-        if (dirRecommendId.rows.length > 0) {
-          dbResolvers.addFilmToDirectory({
-            input: {
-              dirId: dirRecommendId.rows[0].id,
-              ...props,
-            },
-          });
-        } else {
-          dbResolvers.getUser({ vkId: userId }).then((user) => {
-            if (!user) {
-              dbResolvers
-                .addUser({
-                  input: { vkId: userId, userName: userName, userRole: "user" },
-                })
-                .then(() => {
-                  pool
-                    .query(
-                      `SELECT * FROM directories WHERE user_id = ${userId} and dir_type = 'Recommended'`
-                    )
-                    .then((res) => {
-                      dbResolvers.addFilmToDirectory({
-                        input: {
-                          dirId: res.rows[0].id,
-                          ...props,
-                        },
-                      });
-                    });
-                });
-            } else {
-              dbResolvers
-                .addDirectory({
-                  input: {
-                    userId: userId,
-                    dirName: "Рекоммендованное",
-                    dirType: "Recommended",
-                  },
-                })
-                .then(() => {
-                  dbResolvers.addFilmToDirectory({
-                    input: {
-                      dirId: dirRecommendId.rows[0].id,
-                      ...props,
-                    },
-                  });
-                });
-            }
-          });
-        }
-      });
+    const res = await recommendQuery({ input });
+    if (res.isError) {
+      return new Error(res.message);
+    } else {
       return true;
-    } catch (e) {
-      console.log(e);
-      return false;
     }
   },
 };

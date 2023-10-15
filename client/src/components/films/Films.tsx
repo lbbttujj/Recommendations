@@ -85,8 +85,8 @@ export const Films: React.FC<FilmsProps> = ({
 									.then(() => {
 										setMessage('Фильм добавлен в избранное')
 									})
-									.catch(() => {
-										setMessage('Что-то пошло не так')
+									.catch((error) => {
+										setMessage(error?.message || 'Что-то пошло не так')
 									})
 						}}
 					>

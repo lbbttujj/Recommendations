@@ -75,12 +75,17 @@ export const RecommendModal: React.FC<RecommendModalProps> = ({
 					description: '',
 				},
 			},
-		}).then((res) => {
-			if (res) {
-				onClose()
-				setMessage('Рекомендация отправлена')
-			}
 		})
+			.then((res) => {
+				if (res) {
+					onClose()
+					setMessage('Рекомендация отправлена')
+				}
+			})
+			.catch((res) => {
+				onClose()
+				setMessage(res?.message || 'Что-то пошло не так')
+			})
 	}
 
 	return (
