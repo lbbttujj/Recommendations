@@ -1,6 +1,12 @@
 import { useLazyQuery, useMutation } from '@apollo/client'
 import { Icon24Back } from '@vkontakte/icons'
-import { Gallery, Panel, PanelHeaderButton } from '@vkontakte/vkui'
+import {
+	Card,
+	CardScroll,
+	Gallery,
+	Panel,
+	PanelHeaderButton,
+} from '@vkontakte/vkui'
 import { ReactComponent as ArrowDown } from 'assets/img/arrowDown.svg'
 import { ReactComponent as FavoriteIcon } from 'assets/img/favoriteIcon.svg'
 import { ReactComponent as RecommendIcon } from 'assets/img/recommendIcon.svg'
@@ -89,8 +95,8 @@ export const FilmPage: React.FC<FilmPageProps> = ({
 									.then(() => {
 										setMessage('Фильм добавлен в избранное')
 									})
-									.catch(() => {
-										setMessage('Что-то пошло не так')
+									.catch((error) => {
+										setMessage(error?.message || 'Что-то пошло не так')
 									})
 							}
 							className={styles.favoriteIcon}
@@ -117,17 +123,12 @@ export const FilmPage: React.FC<FilmPageProps> = ({
 							</div>
 						</div>
 						<div className={styles.trailers}>
-							<p>Трейлеры</p>
-							<Gallery
-								slideWidth='95%'
-								align={'center'}
-								isDraggable={true}
-								bullets='dark'
-								arrowSize={'m'}
-								showArrows={true}
-							>
+							<div className={styles.title}>
+								<p>Трейлеры</p>
+							</div>
+							<CardScroll size={'l'}>
 								{data.getFilmDetails.videos.trailers.map((el: any) => (
-									<div className={styles.trailer}>
+									<Card className={styles.trailer}>
 										<iframe
 											width='100%'
 											height='250px'
@@ -136,9 +137,9 @@ export const FilmPage: React.FC<FilmPageProps> = ({
 											allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 											allowFullScreen
 										/>
-									</div>
+									</Card>
 								))}
-							</Gallery>
+							</CardScroll>
 						</div>
 					</>
 				)}
