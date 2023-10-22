@@ -7,8 +7,29 @@ query getKpFilms($value: String){
     name
     shortDescription
     poster {
-      url
+      previewUrl
     }
   }
 }
+`)
+
+export const GET_FILM_DETAILS = gql(`
+query getFilmDetails($kpId: Int){
+  getFilmDetails(kpId: $kpId) {
+    description,
+     videos {
+        trailers {
+            url
+        }
+    }
+   watchability {
+    items {
+      url
+      logo {
+        url
+      }
+    }
+  }
+  }
+ }
 `)

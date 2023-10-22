@@ -1,9 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface DirState {
-	dirId: string
-	dirName: string
-}
+import { DirState } from '../types'
 
 const initialState: DirState = {
 	dirId: '',

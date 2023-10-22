@@ -1,34 +1,54 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-import { getFilmCard } from './actions'
-
-// Define a type for the slice state
-interface FilmsState {
+export type Film = {
 	title: string
 	kpId: number | null
 	poster: string
 }
 
-// Define the initial state using that type
-const initialState: FilmsState = {
+interface FilmsState {
+	searchPage: Film
+	directoryPage: Film
+	friendPage: Film
+	recommend: Film
+}
+
+const filmInitialState: Film = {
 	title: '',
 	kpId: null,
 	poster: '',
 }
+const initialState: FilmsState = {
+	searchPage: filmInitialState,
+	directoryPage: filmInitialState,
+	friendPage: filmInitialState,
+	recommend: filmInitialState,
+}
 
 export const filmsSlice = createSlice({
 	name: 'films',
-	// `createSlice` will infer the state type from the `initialState` argument
+
 	initialState,
-	reducers: {},
-	extraReducers: (builder) => {
-		builder.addCase(getFilmCard.fulfilled, (state, action) => {
-			state.title = action.payload.title
-			state.kpId = action.payload.kpId
-			state.poster = action.payload.poster
-		})
+	reducers: {
+		setSearchPageFilmCard: (state, action: PayloadAction<Film>) => {
+			state.searchPage = action.payload
+		},
+		setFriendPageFilmCard: (state, action: PayloadAction<Film>) => {
+			state.friendPage = action.payload
+		},
+		setDirectoryPageFilmCard: (state, action: PayloadAction<Film>) => {
+			state.directoryPage = action.payload
+		},
+		setRecommendFilmCard: (state, action: PayloadAction<Film>) => {
+			state.recommend = action.payload
+		},
 	},
 })
 
-// Other code such as selectors can use the imported `RootState` type
+export const {
+	setSearchPageFilmCard,
+	setFriendPageFilmCard,
+	setDirectoryPageFilmCard,
+	setRecommendFilmCard,
+} = filmsSlice.actions
 export default filmsSlice.reducer

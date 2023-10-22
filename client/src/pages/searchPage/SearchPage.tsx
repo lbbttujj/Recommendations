@@ -10,18 +10,20 @@ import {
 	ScreenSpinner,
 	Search,
 } from '@vkontakte/vkui'
-import React, { ReactElement, useEffect, useRef, useState } from 'react'
-
-import { Films, FilmsType } from '../../components/films/Films'
-import { Snackbar } from '../../components/snackbar/Snackbar'
-import { ADD_FILM_TO_DIR, GET_DIRECTORIES } from '../../graphql/dbQuery'
-import { SEARCH_FILMS } from '../../graphql/kpQuery'
-import { useAppDispatch, useAppSelector } from '../../hooks'
+import { Films } from 'components/films/Films'
 import {
-	setStateFilms,
-	setStateSearchValue,
-} from '../../store/searchSlice/searchSlice'
-import { Directory } from '../directoriesPage/types'
+	useAppDispatch,
+	useAppSelector,
+	useLazyGetDirectories,
+	useSnackBar,
+} from 'hooks'
+import React, { ReactElement, useEffect, useRef, useState } from 'react'
+import { setStateFilms } from 'store/searchSlice/searchSlice'
+
+import { ADD_FILM_TO_DIR } from '../../graphql/dbQuery'
+import { SEARCH_FILMS } from '../../graphql/kpQuery'
+import { setSearchPageFilmCard } from '../../store/filmSlice/filmsSlice'
+import { Film2Type, FilmType } from '../../store/types'
 import styles from './searchPage.module.less'
 
 type SearchPageType = {
@@ -36,48 +38,45 @@ export const SearchPage: React.FC<SearchPageType> = ({
 	changeSearchPanel,
 }) => {
 	const [searchValue, setSearchValue] = useState<string>('')
-	const [films, setFilms] = useState<FilmsType[]>([])
-	const [isSnackBarVisible, setIsSnackBarVisible] = useState(false)
+	const [films, setFilms] = useState<Film2Type[]>([])
+	const { Snackbar, setMessage } = useSnackBar()
+
 	const baseRef = useRef(null)
-	const dispatch = useAppDispatch()
 
 	const stateSearch = useAppSelector((state) => state.search)
 
-	const [execute, { data, loading }] = useLazyQuery<{
-		getKpFilms: FilmsType[]
+	const [searchFilms, { data, loading }] = useLazyQuery<{
+		getKpFilms: FilmType[]
 	}>(SEARCH_FILMS)
-
-	const [executeDir = execute] = useLazyQuery<{
-		getDirectories: Directory[]
-	}>(GET_DIRECTORIES, {
-		variables: {
-			userId: 1,
-		},
-	})
-
+	const { execute: executeDir } = useLazyGetDirectories()
 	const [addFilmToGroup] = useMutation(ADD_FILM_TO_DIR)
+
+	const dispatch = useAppDispatch()
 
 	useEffect(() => {
 		if (data) {
+			// @ts-ignore
 			setFilms(data.getKpFilms)
 			dispatch(setStateFilms(data.getKpFilms))
-			dispatch(setStateSearchValue(searchValue))
 		}
 	}, [data])
 
 	useEffect(() => {
 		if (stateSearch.films.length > 0) {
+			// @ts-ignore
 			setFilms(stateSearch.films)
-			setSearchValue(stateSearch.searchValue)
 		}
 	}, [stateSearch])
 
-	const handleChangeSearch = (value: React.ChangeEvent<HTMLInputElement>) => {
-		setSearchValue(value.target.value)
+	const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const currentSearchValue = event.target.value
+		setSearchValue(currentSearchValue)
 	}
 
 	const handleSearch = () => {
-		execute({ variables: { value: searchValue } })
+		searchFilms({ variables: { value: searchValue } }).catch((error: Error) => {
+			setMessage(error.message)
+		})
 	}
 
 	const addToDirectory = ({
@@ -96,56 +95,29 @@ export const SearchPage: React.FC<SearchPageType> = ({
 					iosCloseItem={<ActionSheetDefaultIosCloseItem />}
 					toggleRef={baseRef}
 				>
-					{
-						// @ts-ignore
-						res.data?.getDirectories.map((dir) => (
-							<ActionSheetItem
-								autoClose={true}
-								onClick={() =>
-									addFilmToGroup({
-										variables: {
-											input: {
-												dirId: dir.id,
-												kpId,
-												imgUrl,
-												name,
-											},
+					{res.data?.getDirectories.map((dir) => (
+						<ActionSheetItem
+							autoClose={true}
+							onClick={() =>
+								addFilmToGroup({
+									variables: {
+										input: {
+											dirId: dir.id,
+											kpId,
+											imgUrl,
+											name,
 										},
-									}).then((res) => {
-										setIsSnackBarVisible(true)
-									})
-								}
-							>
-								{dir.dir_name}
-							</ActionSheetItem>
-						))
-					}
+									},
+								}).then((res) => {
+									setMessage('Фильм успешно добавлен в группу')
+								})
+							}
+						>
+							{dir.dir_name}
+						</ActionSheetItem>
+					))}
 				</ActionSheet>
 			)
-		})
-	}
-
-	const addToFavorite = ({
-		kpId,
-		imgUrl,
-		name,
-	}: {
-		kpId: number
-		imgUrl: string
-		name: string
-	}) => {
-		addFilmToGroup({
-			variables: {
-				input: {
-					dirId: '58577ff6-ccb2-4a2e-9a22-0966b2b411cd',
-					kpId,
-					imgUrl,
-					name,
-				},
-			},
-		}).then((el) => {
-			console.log(el)
-			setIsSnackBarVisible(true)
 		})
 	}
 
@@ -154,7 +126,7 @@ export const SearchPage: React.FC<SearchPageType> = ({
 	}
 
 	return (
-		<Panel id={id} style={{ marginBottom: '15px' }} getRootRef={baseRef}>
+		<Panel id={id} getRootRef={baseRef}>
 			<PanelHeader>Поиск</PanelHeader>
 			<div style={{ display: 'flex' }}>
 				<Search
@@ -177,19 +149,16 @@ export const SearchPage: React.FC<SearchPageType> = ({
 							name={film.name}
 							shortDescription={film.shortDescription}
 							poster={film.poster}
-							addToFavorite={addToFavorite}
 							addToDirectory={addToDirectory}
 							changeViewPanel={changeSearchPanel}
+							setMessage={setMessage}
+							viewPanelName={'film'}
+							setFilmCard={setSearchPageFilmCard}
 						/>
 					)
 				})}
 			</Group>
-			<Snackbar
-				isSnackBarVisible={isSnackBarVisible}
-				setIsSnackBarVisible={setIsSnackBarVisible}
-			>
-				<p>Фильм добавлен в избранное</p>
-			</Snackbar>
+			{Snackbar}
 		</Panel>
 	)
 }

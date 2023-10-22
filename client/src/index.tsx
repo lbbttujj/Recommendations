@@ -5,15 +5,15 @@ import bridge from '@vkontakte/vk-bridge'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
+import { store } from 'store'
 
 import App from './App'
 import reportWebVitals from './reportWebVitals'
-import { store } from './store/store'
 
 bridge.send('VKWebAppInit')
 
 const client = new ApolloClient({
-	uri: 'http://localhost:3005/graphql',
+	uri: 'http://95.163.182.2:3006/graphql',
 	cache: new InMemoryCache(),
 })
 

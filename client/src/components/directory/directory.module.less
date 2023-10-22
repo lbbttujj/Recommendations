@@ -5,6 +5,9 @@
      display: flex;
      flex-direction: column;
      align-items: center;
+     .vkuiCellCheckbox {
+       display: none !important;
+     }
      .closeIcon{
        font-size: 38px;
        position: absolute;
@@ -13,4 +16,20 @@
        font-weight: 700;
      }
    }
+}
+
+.preview {
+  width: 45%;
+  height: 150px;
+  margin: 10px;
+  background-color: #727272;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+
+  &Name {
+    font-size: 20px;
+  }
 }

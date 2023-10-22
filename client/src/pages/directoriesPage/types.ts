@@ -1,4 +1,5 @@
 export type Directory = {
-	dirId: ''
-	dir_name: ''
+	id: string
+	dir_name: string
+	dir_type: string
 }

@@ -8,6 +8,8 @@ type SnackbarProps = {
 	setIsSnackBarVisible: React.Dispatch<React.SetStateAction<boolean>>
 	duration?: number
 	text?: string
+	message?: string
+	setMessage?: React.Dispatch<React.SetStateAction<string>>
 }
 export const Snackbar: React.FC<SnackbarProps> = ({
 	children,
@@ -15,11 +17,14 @@ export const Snackbar: React.FC<SnackbarProps> = ({
 	isSnackBarVisible,
 	duration = 1500,
 	text,
+	message,
+	setMessage,
 }) => {
 	useEffect(() => {
 		if (isSnackBarVisible) {
 			setTimeout(() => {
 				setIsSnackBarVisible(false)
+				setMessage && setMessage('')
 			}, duration)
 		}
 	}, [isSnackBarVisible])
@@ -30,6 +35,7 @@ export const Snackbar: React.FC<SnackbarProps> = ({
 				className={styles.snackbar}
 			>
 				{text && <p>{text}</p>}
+				{message && <p>{message}</p>}
 				{children && children}
 			</div>
 		</div>
