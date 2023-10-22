@@ -13,7 +13,7 @@ import reportWebVitals from './reportWebVitals'
 bridge.send('VKWebAppInit')
 
 const client = new ApolloClient({
-	uri: 'http://localhost:3006/graphql',
+	uri: 'http://95.163.182.2:3006/graphql',
 	cache: new InMemoryCache(),
 })
 
