@@ -27,7 +27,7 @@ export const StartPage: React.FC<StartPageProps> = ({
 			addUser({
 				variables: {
 					input: {
-						vkId: vkId,
+						vk_id: vkId,
 						userName: userName,
 					},
 				},
@@ -39,7 +39,7 @@ export const StartPage: React.FC<StartPageProps> = ({
 
 	return (
 		<div className={styles.startPage}>
-			<h1>Pidor</h1>
+			<h1>Регистрация</h1>
 			<Button onClick={registrate}>Войти</Button>
 		</div>
 	)

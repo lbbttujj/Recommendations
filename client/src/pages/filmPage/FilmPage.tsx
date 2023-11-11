@@ -127,18 +127,19 @@ export const FilmPage: React.FC<FilmPageProps> = ({
 								<p>Трейлеры</p>
 							</div>
 							<CardScroll size={'l'}>
-								{data.getFilmDetails.videos.trailers.map((el: any) => (
-									<Card className={styles.trailer}>
-										<iframe
-											width='100%'
-											height='250px'
-											src={el.url}
-											title='YouTube video player'
-											allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-											allowFullScreen
-										/>
-									</Card>
-								))}
+								{data.getFilmDetails?.videos?.trailers &&
+									data.getFilmDetails.videos.trailers.map((el: any) => (
+										<Card className={styles.trailer}>
+											<iframe
+												width='100%'
+												height='250px'
+												src={el.url}
+												title='YouTube video player'
+												allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+												allowFullScreen
+											/>
+										</Card>
+									))}
 							</CardScroll>
 						</div>
 					</>

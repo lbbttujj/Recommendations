@@ -15,8 +15,8 @@ type FilmsProps = {
 	name: string
 	shortDescription: string
 	poster: {
-		previewUrl: string
-	}
+		previewUrl?: string
+	} | null
 	changeViewPanel: React.Dispatch<React.SetStateAction<string>>
 	addToDirectory?: ({
 		kpId,
@@ -50,7 +50,9 @@ export const Films: React.FC<FilmsProps> = ({
 			setFilmCard({
 				title: name,
 				kpId: id,
-				poster: poster.previewUrl,
+				poster:
+					poster?.previewUrl ||
+					'https://i.pinimg.com/originals/ae/8a/c2/ae8ac2fa217d23aadcc913989fcc34a2.png',
 			})
 		)
 	}
@@ -67,7 +69,13 @@ export const Films: React.FC<FilmsProps> = ({
 				}}
 				className={styles.filmWrapper}
 			>
-				<img src={poster.previewUrl} className={styles.image} />
+				<img
+					src={
+						poster?.previewUrl ||
+						'https://i.pinimg.com/originals/ae/8a/c2/ae8ac2fa217d23aadcc913989fcc34a2.png'
+					}
+					className={styles.image}
+				/>
 				<div className={styles.title}>
 					<span>{name}</span>
 					<span
@@ -79,7 +87,9 @@ export const Films: React.FC<FilmsProps> = ({
 									executeDir,
 									addFilmToGroup,
 									kpId: id,
-									poster: poster.previewUrl,
+									poster:
+										poster?.previewUrl ||
+										'https://i.pinimg.com/originals/ae/8a/c2/ae8ac2fa217d23aadcc913989fcc34a2.png',
 									title: name,
 								})
 									.then(() => {
@@ -96,7 +106,13 @@ export const Films: React.FC<FilmsProps> = ({
 						onClick={(event) => {
 							event.stopPropagation()
 							addToDirectory &&
-								addToDirectory({ kpId: id, imgUrl: poster.previewUrl, name })
+								addToDirectory({
+									kpId: id,
+									imgUrl:
+										poster?.previewUrl ||
+										'https://i.pinimg.com/originals/ae/8a/c2/ae8ac2fa217d23aadcc913989fcc34a2.png',
+									name,
+								})
 						}}
 						className={styles.addToDir}
 					>
