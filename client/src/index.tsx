@@ -14,6 +14,7 @@ bridge.send('VKWebAppInit')
 
 const client = new ApolloClient({
 	uri: 'https://lbbttujj.ru/graphql',
+	// uri: 'http://localhost:3006/graphql',
 	cache: new InMemoryCache(),
 })
 
